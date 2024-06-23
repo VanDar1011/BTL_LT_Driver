@@ -1,0 +1,54 @@
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+
+// Thông tin về device USB mà driver này hỗ trợ
+#define VENDOR_ID  0x21c4
+#define PRODUCT_ID 0x0cd1
+
+// Hàm này được gọi khi một USB device phù hợp được kết nối
+static int simple_usb_probe(struct usb_interface *interface, const struct usb_device_id *id)
+{
+    printk(KERN_INFO "Simple USB device (%04X:%04X) plugged\n", id->idVendor, id->idProduct);
+    return 0; // Trả về 0 để nói rằng chúng ta sẽ quản lý thiết bị này
+}
+
+// Hàm này được gọi khi USB device được ngắt kết nối
+static void simple_usb_disconnect(struct usb_interface *interface)
+{
+    printk(KERN_INFO "Simple USB device removed\n");
+}
+
+// Một bảng định nghĩa các USB device mà driver này hỗ trợ
+static struct usb_device_id simple_usb_table[] = {
+    { USB_DEVICE(VENDOR_ID, PRODUCT_ID) },
+    {} // Dấu kết thúc bảng
+};
+MODULE_DEVICE_TABLE(usb, simple_usb_table);
+
+// Cấu trúc usb_driver
+static struct usb_driver simple_usb_driver = {
+    .name = "usb_driver",
+    .id_table = simple_usb_table,
+    .probe = simple_usb_probe,
+    .disconnect = simple_usb_disconnect,
+};
+clea
+// Hàm khởi tạo module
+static int __init simple_usb_init(void)
+{
+    return usb_register(&simple_usb_driver);
+}
+
+// Hàm dọn dẹp module
+static void __exit simple_usb_exit(void)
+{
+    usb_deregister(&simple_usb_driver);
+}
+
+module_init(simple_usb_init);
+module_exit(simple_usb_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Your Name");
+MODULE_DESCRIPTION("Simple USB Driver Example");
