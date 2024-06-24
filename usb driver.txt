@@ -24,3 +24,10 @@ echo -n "4-1:1.0" | sudo tee /sys/bus/usb/drivers/usb_driver/bind : thêm thiế
 : thêm thiết bị vào driver
 bash config : để chạy trực tiếp file bind
 lsblk : để xem các ổ 
+thêm character với số chính 42/ số phụ 0
+tối đa một thiết bị có thể kết nối 
+ls -l /dev | grep "usb"
+ls -l /dev/usb_crypto : sẽ ra cả số chính cả số phụ
+cat /proc/devices
+echo "datngo" | sudo tee /dev/usb_crypto
+cat quyen chmod 666 /dev/usb_crypto
