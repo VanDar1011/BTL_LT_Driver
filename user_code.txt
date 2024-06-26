@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include "header.h"
+
+void process_data(const char *input_file, const char *output_file, int mode)
+{
+    int fd, input_fd, output_fd;
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read, bytes_written;
+
+    // Mở thiết bị
+    fd = open("/dev/usb_crypto", O_RDWR);
+    if (fd == -1)
+    {
+        perror("Failed to open the device");
+        exit(1);
+    }
+
+    // Mở file input và output
+    input_fd = open(input_file, O_RDONLY);
+    if (input_fd == -1)
+    {
+        perror("Failed to open the input file");
+        close(fd);
+        exit(1);
+    }
+
+    output_fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (output_fd == -1)
+    {
+        perror("Failed to open the output file");
+        close(input_fd);
+        close(fd);
+        exit(1);
+    }
+
+    // Gọi ioctl để thiết lập chế độ
+    if (mode == 1)
+    {
+        printf("Ma hoa\n");
+        ioctl(fd, IOCTL_ENCRYPT);
+    }
+    else if (mode == 2)
+    {
+        printf("Giai ma\n");
+        ioctl(fd, IOCTL_DECRYPT);
+    }
+    printf("Decrypting data\n");
+    // Đọc dữ liệu từ file, gửi tới driver và nhận kết quả
+    // while ((bytes_read = read(input_fd, buffer, BUFFER_SIZE)) > 0) {
+    // Gửi dữ liệu tới driver
+    //   if (write(fd, buffer, bytes_read) != bytes_read) {
+    //     perror("Failed to write the data to the device");
+    //     break;
+    // }
+
+    // Nhận dữ liệu đã xử lý từ driver
+    //  bytes_written = read(fd, buffer, BUFFER_SIZE);
+    // if (bytes_written < 0) {
+    //    perror("Failed to read the data from the device");
+    //   break;
+    //  }
+
+    // Ghi dữ liệu đã xử lý ra file output
+    //  if (write(output_fd, buffer, bytes_written) != bytes_written) {
+    //     perror("Failed to write the data to the output file");
+    //     break;
+    //  }
+    //}
+
+    // Đóng tất cả các file
+    close(input_fd);
+    close(output_fd);
+    close(fd);
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 4)
+    {
+        fprintf(stderr, "Usage: %s <input file> <output file> <mode: 1-encrypt, 2-decrypt>\n", argv[0]);
+        return 1;
+    }
+    int mode = atoi(argv[3]);
+    printf("gia tri mode %d",mode);
+
+    process_data(argv[1], argv[2], mode);
+    return 0;
+}

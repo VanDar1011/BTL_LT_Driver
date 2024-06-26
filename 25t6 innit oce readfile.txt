@@ -1,0 +1,71 @@
+static int __init file_io_init(void)
+{
+    struct file *input_file, *output_file;
+    char buf[BUF_SIZE + 1 ];
+    mm_segment_t old_fs;
+    int bytes_read, bytes_written;
+    unsigned char hex_buffer[BUF_SIZE * 2 + 1];
+
+    printk(KERN_INFO "File IO module loaded\n");
+
+    // Open input file
+    input_file = filp_open(file_a, O_RDONLY, 0);
+    if (IS_ERR(input_file))
+    {
+        printk(KERN_ALERT "Failed to open input file\n");
+        return PTR_ERR(input_file);
+    }
+
+    // Open output file
+    output_file = filp_open(file_b, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (IS_ERR(output_file))
+    {
+        printk(KERN_ALERT "Failed to open output file\n");
+        filp_close(input_file, NULL);
+        return PTR_ERR(output_file);
+    }
+
+    // Read from input file and write to output file
+    old_fs = get_fs();
+    set_fs(KERNEL_DS);
+
+     while ((bytes_read = vfs_read(input_file, buf, BUF_SIZE, &input_file->f_pos)) > 0)
+    {
+        if (bytes_read < BUF_SIZE)
+        {  
+            // Điền khoảng trống vào chỗ còn lại trong bộ đệm buf
+            memset(buf + bytes_read-1, 0x20, BUF_SIZE - bytes_read+1);
+        }
+
+        buf[BUF_SIZE] = '\0'; // Đảm bảo bộ đệm buf kết thúc bằng null-terminator
+
+        printk(KERN_INFO "Read chunk: %s\n", buf);
+        int i;
+        for (i = 0; i < BUF_SIZE; ++i)
+        {
+            hex_buffer[i * 2] = (buf[i] >> 4) + '0';
+            if (hex_buffer[i * 2] > '9')
+                hex_buffer[i * 2] += 7; // Chuyển số thành chữ cái A-F
+            hex_buffer[i * 2 + 1] = (buf[i] & 0xF) + '0';
+            if (hex_buffer[i * 2 + 1] > '9')
+                hex_buffer[i * 2 + 1] += 7; // Chuyển số thành chữ cái A-F
+        }
+
+        hex_buffer[2 * BUF_SIZE] = '\0'; // Đảm bảo chuỗi kết thúc bằng null-terminator
+        printk(KERN_INFO "Hex values: %s\n", hex_buffer);
+        bytes_written = vfs_write(output_file, hex_buffer, 2 * BUF_SIZE, &output_file->f_pos);
+        if (bytes_written < 0)
+        {
+            printk(KERN_ALERT "Failed to write to output file\n");
+            break;
+        }
+    }
+
+    set_fs(old_fs);
+
+    // Đóng tệp
+    filp_close(input_file, NULL);
+    filp_close(output_file, NULL);
+
+    return 0;
+}

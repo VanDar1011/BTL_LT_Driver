@@ -1,0 +1,1 @@
+cmd_/home/dat/usb_driver/usb_driver.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -z noexecstack   --build-id  -T ./scripts/module-common.lds -o /home/dat/usb_driver/usb_driver.ko /home/dat/usb_driver/usb_driver.o /home/dat/usb_driver/usb_driver.mod.o;  true
