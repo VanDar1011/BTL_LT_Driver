@@ -31,3 +31,8 @@ ls -l /dev/usb_crypto : sẽ ra cả số chính cả số phụ
 cat /proc/devices
 echo "datngo" | sudo tee /dev/usb_crypto
 cat quyen chmod 666 /dev/usb_crypto
+App
+gcc main.c -o usb_crypto_app `pkg-config --cflags --libs gtk+-3.0`
+gcc -o gtk_file_chooser_with_full_path gtk_file_chooser_with_full_path.c `pkg-config --cflags --libs gtk+-3.0`
+
+./usb_crypto_app
