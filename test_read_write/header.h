@@ -11,4 +11,3 @@
 #define IOCTL_DECRYPT _IOW('k', 2, char[MAX_FILENAME_LEN])
 
 #endif // USB_CRYPTO_IOCTL_H
-
