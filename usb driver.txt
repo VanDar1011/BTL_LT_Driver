@@ -1,0 +1,38 @@
+- xem log usb 
+dmesg | grep -i usb
+lấy được 
+idVondor=21c4,
+idProduct=0cd1,
+dmesg -wH | grep -i usb : theo dõi  thời gian thực 
+lsusb : để liệt kê usb
+ls -l /sys/bus/usb/drivers : thư mục chứa driver
+lsmod | grep -i usb : lọc ra driver có tên usb được chèn vào nhân
+(1.Mở file
+sudo nano /etc/udev/rules.d/99-usbdriver.rules
+2.Gán nội dung vào file 
+ACTION=="add", ATTRS{idVendor}=="21c4", ATTRS{idProduct}=="0cd1", RUN+="/bin/sh -c 'echo -n $kernel > 
+/sys/bus/usb/drivers/usb_storage/unbind; echo -n $kernel > /sys/bus/usb/drivers/usb_driver/bind'"
+Sau đó
+3.Ctrl+O, Enter để lưu và Ctrl+X để thoát.
+4.Reload rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger) : không cần , dùng bên dưới
+tạo file config với nội dụng
+#!bin/bash
+echo -n "4-1:1.0" | sudo tee /sys/bus/usb/drivers/usb-storage/unbind : bỏ thiết bị khỏi driver
+echo -n "4-1:1.0" | sudo tee /sys/bus/usb/drivers/usb_driver/bind : thêm thiết bị vào driver khác
+: thêm thiết bị vào driver
+bash config : để chạy trực tiếp file bind
+lsblk : để xem các ổ 
+thêm character với số chính 42/ số phụ 0
+tối đa một thiết bị có thể kết nối 
+ls -l /dev | grep "usb"
+ls -l /dev/usb_crypto : sẽ ra cả số chính cả số phụ
+cat /proc/devices
+echo "datngo" | sudo tee /dev/usb_crypto
+cat quyen chmod 666 /dev/usb_crypto
+App
+gcc main.c -o usb_crypto_app `pkg-config --cflags --libs gtk+-3.0`
+gcc -o gtk_file_chooser_with_full_path gtk_file_chooser_with_full_path.c `pkg-config --cflags --libs gtk+-3.0`
+
+./usb_crypto_app
