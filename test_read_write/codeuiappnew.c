@@ -9,8 +9,9 @@
 #include "header.h"
 
 GtkWidget *entry_filename;
+GtkWidget *entry_output_filename;
 
-// Hàm xử lý dữ liệu
+// Hàm xử lý dữ liệu với file output
 void process_data(const char *filename, int mode)
 {
     int fd;
@@ -26,7 +27,6 @@ void process_data(const char *filename, int mode)
     }
 
     // Gọi ioctl để thiết lập chế độ và truyền tên file
-    strncpy(file_name, filename, MAX_FILENAME_LEN);
     if (mode == 1)
     {
         printf("Encrypting data: %s\n", filename);
@@ -71,28 +71,69 @@ static void on_select_file_button_clicked(GtkWidget *widget, gpointer data)
     gtk_widget_destroy(dialog);
 }
 
+// Callback khi nhấn nút chọn file output
+static void on_select_output_file_button_clicked(GtkWidget *widget, gpointer data)
+{
+    GtkWidget *dialog;
+    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_SAVE;
+    gint res;
+
+    dialog = gtk_file_chooser_dialog_new("Select Output File",
+                                         GTK_WINDOW(data),
+                                         action,
+                                         ("_Cancel"),
+                                         GTK_RESPONSE_CANCEL,
+                                         ("_Open"),
+                                         GTK_RESPONSE_ACCEPT,
+                                         NULL);
+
+    // gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+
+    res = gtk_dialog_run(GTK_DIALOG(dialog));
+    if (res == GTK_RESPONSE_ACCEPT)
+    {
+        char *filename;
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+        filename = gtk_file_chooser_get_filename(chooser);
+        gtk_entry_set_text(GTK_ENTRY(entry_output_filename), filename);
+        g_free(filename);
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
 // Callback cho nút mã hóa
 static void on_encrypt_button_clicked(GtkWidget *widget, gpointer data)
 {
     const gchar *filename = gtk_entry_get_text(GTK_ENTRY(entry_filename));
-    if (strlen(filename) == 0)
+    const gchar *output_filename = gtk_entry_get_text(GTK_ENTRY(entry_output_filename));
+
+    if (strlen(filename) == 0 || strlen(output_filename) == 0)
     {
-        g_print("Please select a file first.\n");
+        g_print("Please select both input and output files.\n");
         return;
     }
-    process_data(filename, 1);
+
+    char file_name[MAX_FILENAME_LEN];
+    snprintf(file_name, MAX_FILENAME_LEN, "%s;%s", filename, output_filename);
+    process_data(file_name, 1);
 }
 
 // Callback cho nút giải mã
 static void on_decrypt_button_clicked(GtkWidget *widget, gpointer data)
 {
     const gchar *filename = gtk_entry_get_text(GTK_ENTRY(entry_filename));
-    if (strlen(filename) == 0)
+    const gchar *output_filename = gtk_entry_get_text(GTK_ENTRY(entry_output_filename));
+
+    if (strlen(filename) == 0 || strlen(output_filename) == 0)
     {
-        g_print("Please select a file first.\n");
+        g_print("Please select both input and output files.\n");
         return;
     }
-    process_data(filename, 2);
+
+    char file_name[MAX_FILENAME_LEN];
+    snprintf(file_name, MAX_FILENAME_LEN, "%s;%s", filename, output_filename);
+    process_data(file_name, 2);
 }
 
 // Chương trình chính
@@ -103,6 +144,7 @@ int main(int argc, char *argv[])
     GtkWidget *encrypt_button;
     GtkWidget *decrypt_button;
     GtkWidget *select_file_button;
+    GtkWidget *select_output_file_button;
 
     gtk_init(&argc, &argv);
 
@@ -120,27 +162,51 @@ int main(int argc, char *argv[])
     gtk_container_add(GTK_CONTAINER(window), grid);
 
     // Nhãn cho nhập tên file
-    GtkWidget *label_filename = gtk_label_new("Selected File:");
+    GtkWidget *label_filename = gtk_label_new("Selected Input File:");
     gtk_grid_attach(GTK_GRID(grid), label_filename, 0, 0, 1, 1);
 
     // Ô nhập tên file
     entry_filename = gtk_entry_new();
-    gtk_grid_attach(GTK_GRID(grid), entry_filename, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), entry_filename, 1, 0, 2, 1);
+    //
+    gtk_entry_set_max_length(GTK_ENTRY(entry_filename), MAX_FILENAME_LEN - 1); // Set maximum length
+    gtk_entry_set_width_chars(GTK_ENTRY(entry_filename), 50);                  // Set width in characters
+    gtk_widget_set_hexpand(GTK_WIDGET(entry_filename), TRUE);                  // Expand horizontally
+    gtk_widget_set_margin_end(GTK_WIDGET(entry_filename), 10);
+    //
 
     // Tạo nút chọn file
-    select_file_button = gtk_button_new_with_label("Select File");
-    gtk_grid_attach(GTK_GRID(grid), select_file_button, 2, 0, 1, 1);
+    select_file_button = gtk_button_new_with_label("Select");
+    gtk_grid_attach(GTK_GRID(grid), select_file_button, 3, 0, 1, 1);
     g_signal_connect(select_file_button, "clicked", G_CALLBACK(on_select_file_button_clicked), window);
+
+    // Nhãn cho nhập tên file output
+    GtkWidget *label_output_filename = gtk_label_new("Output File:");
+    gtk_grid_attach(GTK_GRID(grid), label_output_filename, 0, 1, 1, 1);
+
+    // Ô nhập tên file output
+    entry_output_filename = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), entry_output_filename, 1, 1, 2, 1);
+    //
+    gtk_entry_set_max_length(GTK_ENTRY(entry_output_filename), MAX_FILENAME_LEN - 1); // Set maximum length
+    gtk_entry_set_width_chars(GTK_ENTRY(entry_output_filename), 50);                  // Set width in characters
+    gtk_widget_set_hexpand(GTK_WIDGET(entry_output_filename), TRUE);                  // Expand horizontally
+    gtk_widget_set_margin_end(GTK_WIDGET(entry_output_filename), 10);
+    //
+    // Tạo nút chọn file output
+    select_output_file_button = gtk_button_new_with_label("Select Output");
+    gtk_grid_attach(GTK_GRID(grid), select_output_file_button, 3, 1, 1, 1);
+    g_signal_connect(select_output_file_button, "clicked", G_CALLBACK(on_select_output_file_button_clicked), window);
 
     // Tạo nút mã hóa
     encrypt_button = gtk_button_new_with_label("Encrypt");
     g_signal_connect(encrypt_button, "clicked", G_CALLBACK(on_encrypt_button_clicked), NULL);
-    gtk_grid_attach(GTK_GRID(grid), encrypt_button, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), encrypt_button, 0, 2, 1, 1);
 
     // Tạo nút giải mã
     decrypt_button = gtk_button_new_with_label("Decrypt");
     g_signal_connect(decrypt_button, "clicked", G_CALLBACK(on_decrypt_button_clicked), NULL);
-    gtk_grid_attach(GTK_GRID(grid), decrypt_button, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), decrypt_button, 1, 2, 1, 1);
 
     // Hiển thị tất cả các widget
     gtk_widget_show_all(window);
